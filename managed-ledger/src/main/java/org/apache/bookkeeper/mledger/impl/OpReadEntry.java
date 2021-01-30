@@ -23,6 +23,8 @@ import com.google.common.collect.Lists;
 import io.netty.util.Recycler;
 import io.netty.util.Recycler.Handle;
 import java.util.List;
+
+import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.mledger.AsyncCallbacks.ReadEntriesCallback;
 import org.apache.bookkeeper.mledger.Entry;
 import org.apache.bookkeeper.mledger.ManagedLedgerException;
@@ -97,6 +99,22 @@ class OpReadEntry implements ReadEntriesCallback {
                 callback.readEntriesComplete(entries, ctx);
                 recycle();
             }));
+        } else if (cursor.config.isAutoSkipNonRecoverableData()
+                && exception.getCause() instanceof BKException.BKBookieHandleNotAvailableException) {
+            // It is possible to create situation when bookie client won't be able to read valid existing entry.
+            // Specifically: write large entry and then reduce max message size
+            // Bookie client will disconnect on attempt to deal with this
+            // and throw the exception BKBookieHandleNotAvailableException.
+            log.warn("[{}][{}] read failed from ledger at position:{} : {}; will skip the entry",
+                    cursor.ledger.getName(),
+                    cursor.getName(),
+                    readPosition,
+                    exception.getMessage(),
+                    exception);
+            // Move to next valid position, skipping this one entry
+            final Position nexReadPosition = readPosition.getNext();
+            updateReadPosition(nexReadPosition);
+            checkReadCompletion();
         } else if (cursor.config.isAutoSkipNonRecoverableData() && exception instanceof NonRecoverableLedgerException) {
             log.warn("[{}][{}] read failed from ledger at position:{} : {}", cursor.ledger.getName(), cursor.getName(),
                     readPosition, exception.getMessage());
