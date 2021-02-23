@@ -93,7 +93,7 @@ public abstract class AbstractKinesisSink<T> extends AbstractAwsConnector implem
     protected String streamName;
     private static final String defaultPartitionedKey = "default";
     private static final int maxPartitionedKeyLength = 256;
-    private SinkContext sinkContext;
+    protected SinkContext sinkContext;
     // 
     private static final int FALSE = 0;
     private static final int TRUE = 1;
@@ -122,7 +122,7 @@ public abstract class AbstractKinesisSink<T> extends AbstractAwsConnector implem
                 : partitionedKey; // partitionedKey Length must be at least one, and at most 256
         ByteBuffer data = createKinesisMessage(record);
         ListenableFuture<UserRecordResult> addRecordResult = kinesisProducer.addUserRecord(this.streamName,
-                partitionedKey, data);
+                partitionedKey, null /*explicitHashKey*/, data, getAwsSchema(record));
         addCallback(addRecordResult,
                 ProducerSendCallback.create(RECYCLER, this, record, System.nanoTime()), directExecutor());
         if (sinkContext != null) {
@@ -132,6 +132,10 @@ public abstract class AbstractKinesisSink<T> extends AbstractAwsConnector implem
         if (LOG.isDebugEnabled()) {
             LOG.debug("Published message to kinesis stream {} with size {}", streamName, data.array().length);
         }
+    }
+
+    public com.amazonaws.services.schemaregistry.common.Schema getAwsSchema(Record<T> record) {
+        return null;
     }
 
     @Override
@@ -166,11 +170,17 @@ public abstract class AbstractKinesisSink<T> extends AbstractAwsConnector implem
                 .getCredentialProvider();
         kinesisConfig.setCredentialsProvider(credentialsProvider);
 
+        postKinesisConfig(kinesisConfig, sinkContext);
+
         this.streamName = kinesisSinkConfig.getAwsKinesisStreamName();
         this.kinesisProducer = new KinesisProducer(kinesisConfig);
         IS_PUBLISH_FAILED.set(this, FALSE);
 
         LOG.info("Kinesis sink started. {}", (ReflectionToStringBuilder.toString(kinesisConfig, ToStringStyle.SHORT_PREFIX_STYLE)));
+    }
+
+    protected void postKinesisConfig(KinesisProducerConfiguration kinesisConfig, SinkContext sinkContext) {
+        // noop, for extensions
     }
 
     private static final class ProducerSendCallback<M> implements FutureCallback<UserRecordResult> {
@@ -233,6 +243,6 @@ public abstract class AbstractKinesisSink<T> extends AbstractAwsConnector implem
         }
     }
 
-    public abstract ByteBuffer createKinesisMessage(Record<T> record);
+    protected abstract ByteBuffer createKinesisMessage(Record<T> record);
 
 }
