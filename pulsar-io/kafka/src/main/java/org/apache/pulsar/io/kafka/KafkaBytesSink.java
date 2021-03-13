@@ -21,15 +21,15 @@ package org.apache.pulsar.io.kafka;
 
 import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.pulsar.functions.api.Record;
-import org.apache.pulsar.io.core.KeyValue;
 import org.apache.pulsar.io.core.annotations.Connector;
 import org.apache.pulsar.io.core.annotations.IOType;
+import org.apache.pulsar.io.kafka.connect.ProducerRecordWithSchema;
 
 /**
  * Kafka sink should treats incoming messages as pure bytes. So we don't
@@ -53,14 +53,12 @@ public class KafkaBytesSink extends KafkaAbstractSink<String, byte[]> {
     }
 
     @Override
-    public KeyValue<String, byte[]> extractKeyValue(Record<byte[]> record) {
-        return new KeyValue<>(record.getKey().orElse(null), record.getValue());
-    }
-
-    @Override
-    public Pair<Schema, Schema> extractKeyValueSchemas(Record<byte[]> record) {
+    public ProducerRecord<String, byte[]> toProducerRecord(Record<byte[]> record) {
+        String key = record.getKey().orElse(null);
+        byte[] value = record.getValue();
         Schema keySchema = Schema.STRING_SCHEMA;
         Schema valueSchema = Schema.BYTES_SCHEMA;
-        return Pair.of(keySchema, valueSchema);
+
+        return new ProducerRecordWithSchema<>(topicName, key, value, keySchema, valueSchema);
     }
 }

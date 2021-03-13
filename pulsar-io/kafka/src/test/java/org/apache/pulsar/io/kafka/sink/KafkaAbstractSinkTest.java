@@ -21,6 +21,7 @@ package org.apache.pulsar.io.kafka.sink;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.pulsar.functions.api.Record;
@@ -28,6 +29,7 @@ import org.apache.pulsar.io.core.KeyValue;
 import org.apache.pulsar.io.core.SinkContext;
 import org.apache.pulsar.io.kafka.KafkaAbstractSink;
 import org.apache.pulsar.io.kafka.KafkaSinkConfig;
+import org.apache.pulsar.io.kafka.connect.ProducerRecordWithSchema;
 import org.slf4j.Logger;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -45,15 +47,14 @@ import static org.testng.Assert.*;
 
 public class KafkaAbstractSinkTest {
     private static class DummySink extends KafkaAbstractSink<String, byte[]> {
-
         @Override
-        public KeyValue extractKeyValue(Record record) {
-            return new KeyValue<>(record.getKey().orElse(null), record.getValue());
-        }
+        public ProducerRecord<String, byte[]> toProducerRecord(Record<byte[]> record) {
+            String key = record.getKey().orElse(null);
+            byte[] value = record.getValue();
+            Schema keySchema = Schema.STRING_SCHEMA;
+            Schema valueSchema = Schema.BYTES_SCHEMA;
 
-        @Override
-        public Pair<Schema, Schema> extractKeyValueSchemas(Record<byte[]> message) {
-            return Pair.of(Schema.STRING_SCHEMA, Schema.BYTES_SCHEMA);
+            return new ProducerRecordWithSchema<>(topicName, key, value, keySchema, valueSchema);
         }
     }
 

@@ -21,18 +21,15 @@ package org.apache.pulsar.io.kafka;
 
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.pulsar.functions.api.Record;
-import org.apache.pulsar.io.core.KeyValue;
 import org.apache.pulsar.io.core.Sink;
 import org.apache.pulsar.io.core.SinkContext;
 import org.apache.pulsar.io.kafka.connect.KafkaSinkWrappingProducer;
-import org.apache.pulsar.io.kafka.connect.ProducerRecordWithSchema;
 import org.apache.pulsar.io.kafka.connect.PulsarKafkaWorkerConfig;
 
 import java.io.IOException;
@@ -45,20 +42,18 @@ import java.util.Properties;
  * Users need to implement extractKeyValue function to use this sink
  */
 @Slf4j
-public abstract class KafkaAbstractSink<K, V> implements Sink<byte[]> {
+public abstract class KafkaAbstractSink<K, V> implements Sink<V> {
 
     private Producer<K, V> producer;
     private Properties props = new Properties();
     private KafkaSinkConfig kafkaSinkConfig;
 
-    @Override
-    public void write(Record<byte[]> sourceRecord) {
-        KeyValue<K, V> keyValue = extractKeyValue(sourceRecord);
-        Pair<Schema, Schema> keyValueSchemas = extractKeyValueSchemas(sourceRecord);
+    protected String topicName;
 
-        ProducerRecord<K, V> record = new ProducerRecordWithSchema<K, V>(kafkaSinkConfig.getTopic(),
-                keyValue.getKey(), keyValue.getValue(),
-                keyValueSchemas.getKey(), keyValueSchemas.getValue());
+    @Override
+    public void write(Record<V> sourceRecord) {
+        ProducerRecord<K, V> record = toProducerRecord(sourceRecord);
+
         if (log.isDebugEnabled()) {
             log.debug("Record sending to kafka, record={}.", record);
         }
@@ -87,8 +82,8 @@ public abstract class KafkaAbstractSink<K, V> implements Sink<byte[]> {
     @Override
     public void open(Map<String, Object> config, SinkContext sinkContext) throws Exception {
         kafkaSinkConfig = KafkaSinkConfig.load(config);
-        // kafkaSinkConfig.setKafkaConnectorSinkClass("org.apache.kafka.connect.file.FileStreamSinkConnector");
         Objects.requireNonNull(kafkaSinkConfig.getTopic(), "Kafka topic is not set");
+        topicName = kafkaSinkConfig.getTopic();
 
         String kafkaConnectorName = kafkaSinkConfig.getKafkaConnectorSinkClass();
         if (Strings.isNullOrEmpty(kafkaConnectorName)) {
@@ -134,7 +129,5 @@ public abstract class KafkaAbstractSink<K, V> implements Sink<byte[]> {
         log.info("Kafka sink started : {}.", props);
     }
 
-    public abstract KeyValue<K, V> extractKeyValue(Record<byte[]> message);
-
-    public abstract Pair<Schema, Schema> extractKeyValueSchemas(Record<byte[]> message);
+    public abstract ProducerRecord<K, V> toProducerRecord(Record<V> record);
 }

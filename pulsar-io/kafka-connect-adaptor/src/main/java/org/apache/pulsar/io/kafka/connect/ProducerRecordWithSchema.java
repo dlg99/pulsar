@@ -21,7 +21,6 @@ package org.apache.pulsar.io.kafka.connect;
 
 import lombok.EqualsAndHashCode;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.header.Header;
 import org.apache.kafka.connect.data.Schema;
 
 @EqualsAndHashCode(callSuper=true)
@@ -34,6 +33,15 @@ public class ProducerRecordWithSchema<K, V> extends ProducerRecord<K, V> {
         super(topic, key, value);
         this.keySchema = keySchema;
         this.valueSchema = valueSchema;
+    }
+
+    @Override
+    public String toString() {
+        String key = keySchema == null ? "null" : keySchema.name();
+        String val = valueSchema == null ? "null" : valueSchema.name();
+
+        return "ProducerRecordWithSchema(super=" + super.toString()
+                + ", keySchema=" + key + ", valueSchema=" + val  + ")";
     }
 
     public Schema getKeySchema() {

@@ -48,7 +48,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static org.apache.pulsar.io.kafka.connect.PulsarKafkaWorkerConfig.OFFSET_STORAGE_TOPIC_CONFIG;
 import static org.apache.pulsar.io.kafka.connect.PulsarKafkaWorkerConfig.PULSAR_SERVICE_URL_CONFIG;
@@ -198,8 +197,12 @@ public class KafkaSinkWrappingProducer<K, V> implements Producer<K, V> {
 
         if (producerRecord instanceof ProducerRecordWithSchema) {
             ProducerRecordWithSchema rec = (ProducerRecordWithSchema) producerRecord;
-            keySchema = rec.getKeySchema();
-            valueSchema = rec.getValueSchema();
+            if (rec.getKeySchema() != null) {
+                keySchema = rec.getKeySchema();
+            }
+            if (rec.getValueSchema() != null) {
+                valueSchema = rec.getValueSchema();
+            }
         }
 
         long offset = taskContext.currentOffset(producerRecord.topic(), partition).incrementAndGet();
