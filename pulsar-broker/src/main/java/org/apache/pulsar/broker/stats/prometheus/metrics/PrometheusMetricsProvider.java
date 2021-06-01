@@ -53,9 +53,9 @@ public class PrometheusMetricsProvider implements StatsProvider {
     /**
      * These acts a registry of the metrics defined in this provider
      */
-    final ConcurrentMap<String, LongAdderCounter> counters = new ConcurrentSkipListMap<>();
-    final ConcurrentMap<String, SimpleGauge<? extends Number>> gauges = new ConcurrentSkipListMap<>();
-    final ConcurrentMap<String, DataSketchesOpStatsLogger> opStats = new ConcurrentSkipListMap<>();
+    public final ConcurrentMap<String, LongAdderCounter> counters = new ConcurrentSkipListMap<>();
+    public final ConcurrentMap<String, SimpleGauge<? extends Number>> gauges = new ConcurrentSkipListMap<>();
+    public final ConcurrentMap<String, DataSketchesOpStatsLogger> opStats = new ConcurrentSkipListMap<>();
 
     public PrometheusMetricsProvider() {
         this.cachingStatsProvider = new CachingStatsProvider(new StatsProvider() {
