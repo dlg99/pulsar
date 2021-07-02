@@ -39,7 +39,7 @@ public class PulsarKafkaWorkerConfig extends WorkerConfig {
 
 
     /**
-     * <code>pulsar.service.url</code>
+     * <code>pulsar.service.url</code>PulsarKafkaSinkTaskContext
      */
     public static final String PULSAR_SERVICE_URL_CONFIG = "pulsar.service.url";
     private static final String PULSAR_SERVICE_URL_CONFIG_DOC = "pulsar service url";

@@ -193,8 +193,7 @@ public class PulsarOffsetBackingStore implements OffsetBackingStore {
     }
 
     @Override
-    public Future<Map<ByteBuffer, ByteBuffer>> get(Collection<ByteBuffer> keys,
-                                                   Callback<Map<ByteBuffer, ByteBuffer>> callback) {
+    public Future<Map<ByteBuffer, ByteBuffer>> get(Collection<ByteBuffer> keys) {
         CompletableFuture<Void> endFuture = new CompletableFuture<>();
         readToEnd(endFuture);
         return endFuture.thenApply(ignored -> {
@@ -208,14 +207,7 @@ public class PulsarOffsetBackingStore implements OffsetBackingStore {
                     values.put(key, value);
                 }
             }
-            if (null != callback) {
-                callback.onCompletion(null, values);
-            }
             return values;
-        }).whenComplete((ignored, cause) -> {
-            if (null != cause && null != callback) {
-                callback.onCompletion(cause, null);
-            }
         });
     }
 

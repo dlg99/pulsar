@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.connect.util.Callback;
@@ -80,25 +81,8 @@ public class PulsarOffsetBackingStoreTest extends ProducerConsumerBase {
     @Test
     public void testGetFromEmpty() throws Exception {
         assertTrue(offsetBackingStore.get(
-            Arrays.asList(ByteBuffer.wrap("empty-key".getBytes(UTF_8))),
-            null
+            Arrays.asList(ByteBuffer.wrap("empty-key".getBytes(UTF_8)))
         ).get().isEmpty());
-    }
-
-    @Test
-    public void testGetFromEmptyCallback() throws Exception {
-        CompletableFuture<Map<ByteBuffer, ByteBuffer>> callbackFuture = new CompletableFuture<>();
-        assertTrue(offsetBackingStore.get(
-            Arrays.asList(ByteBuffer.wrap("empty-key".getBytes(UTF_8))),
-            (error, result) -> {
-                if (null != error) {
-                    callbackFuture.completeExceptionally(error);
-                } else {
-                    callbackFuture.complete(result);
-                }
-            }
-        ).get().isEmpty());
-        assertTrue(callbackFuture.get().isEmpty());
     }
 
     @Test
@@ -138,7 +122,7 @@ public class PulsarOffsetBackingStoreTest extends ProducerConsumerBase {
         }
 
         Map<ByteBuffer, ByteBuffer> result =
-            offsetBackingStore.get(keys, null).get();
+            offsetBackingStore.get(keys).get();
         assertEquals(numKeys, result.size());
         AtomicInteger count = new AtomicInteger();
         new TreeMap<>(result).forEach((key, value) -> {
