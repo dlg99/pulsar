@@ -18,12 +18,14 @@
  */
 package org.apache.pulsar.io.core;
 
-import java.nio.ByteBuffer;
-import java.util.concurrent.CompletableFuture;
+import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.common.classification.InterfaceAudience;
 import org.apache.pulsar.common.classification.InterfaceStability;
 import org.apache.pulsar.functions.api.StateStore;
 import org.slf4j.Logger;
+
+import java.nio.ByteBuffer;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Interface for a connector providing information about environment where it is running.
@@ -46,14 +48,7 @@ public interface ConnectorContext {
      * @return the number of instances that invoke this source.
      */
     int getNumInstances();
-    
-    /**
-     * Record a user defined metric
-     * @param metricName The name of the metric
-     * @param value The value of the metric
-     */
-    void recordMetric(String metricName, double value);
-    
+
     /**
      * The tenant this source belongs to.
      *
@@ -94,41 +89,6 @@ public interface ConnectorContext {
     default <S extends StateStore> S getStateStore(String name) {
         throw new UnsupportedOperationException("Not implemented");
     }
-
-    /**
-     * Increment the builtin distributed counter referred by key.
-     *
-     * @param key    The name of the key
-     * @param amount The amount to be incremented
-     */
-    void incrCounter(String key, long amount);
-
-
-    /**
-     * Increment the builtin distributed counter referred by key
-     * but dont wait for the completion of the increment operation
-     *
-     * @param key    The name of the key
-     * @param amount The amount to be incremented
-     */
-    CompletableFuture<Void> incrCounterAsync(String key, long amount);
-
-    /**
-     * Retrieve the counter value for the key.
-     *
-     * @param key name of the key
-     * @return the amount of the counter value for this key
-     */
-    long getCounter(String key);
-
-    /**
-     * Retrieve the counter value for the key, but don't wait
-     * for the operation to be completed
-     *
-     * @param key name of the key
-     * @return the amount of the counter value for this key
-     */
-    CompletableFuture<Long> getCounterAsync(String key);
 
     /**
      * Update the state value for the key.
@@ -175,4 +135,54 @@ public interface ConnectorContext {
      * @param key   name of the key
      */
     CompletableFuture<Void> deleteStateAsync(String key);
+
+    /**
+     * Increment the builtin distributed counter referred by key.
+     *
+     * @param key    The name of the key
+     * @param amount The amount to be incremented
+     */
+    void incrCounter(String key, long amount);
+
+    /**
+     * Increment the builtin distributed counter referred by key
+     * but dont wait for the completion of the increment operation
+     *
+     * @param key    The name of the key
+     * @param amount The amount to be incremented
+     */
+    CompletableFuture<Void> incrCounterAsync(String key, long amount);
+
+    /**
+     * Retrieve the counter value for the key.
+     *
+     * @param key name of the key
+     * @return the amount of the counter value for this key
+     */
+    long getCounter(String key);
+
+    /**
+     * Retrieve the counter value for the key, but don't wait
+     * for the operation to be completed
+     *
+     * @param key name of the key
+     * @return the amount of the counter value for this key
+     */
+    CompletableFuture<Long> getCounterAsync(String key);
+
+    /**
+     * Record a user defined metric
+     * @param metricName The name of the metric
+     * @param value The value of the metric
+     */
+    void recordMetric(String metricName, double value);
+
+    /**
+     * Get the pulsar client.
+     *
+     * @return the instance of pulsar client
+     */
+    default PulsarClient getPulsarClient() {
+        throw new UnsupportedOperationException("not implemented");
+    }
 }
