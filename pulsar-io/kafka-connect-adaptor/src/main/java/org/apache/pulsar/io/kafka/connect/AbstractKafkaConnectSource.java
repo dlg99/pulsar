@@ -189,7 +189,7 @@ public abstract class AbstractKafkaConnectSource<T> implements Source<T> {
 
     private static Map<String, String> PROPERTIES = Collections.emptyMap();
     private static Optional<Long> RECORD_SEQUENCE = Optional.empty();
-    private static long FLUSH_TIMEOUT_MS = 2000;
+    private static long FLUSH_TIMEOUT_MS = 60000;
 
     public abstract class AbstractKafkaSourceRecord<T> implements Record {
         @Getter
@@ -247,9 +247,8 @@ public abstract class AbstractKafkaConnectSource<T> implements Source<T> {
                     flushFuture.complete(null);
                 } catch (InterruptedException exception) {
                     log.warn("Flush of {} offsets interrupted, cancelling", this);
-                    Thread.currentThread().interrupt();
                     offsetWriter.cancelFlush();
-                    flushFuture.completeExceptionally(new Exception("Failed to commit offsets", exception));
+                    flushFuture.completeExceptionally(new Exception("Failed to commit offsets"));
                 } catch (Throwable t) {
                     // SourceTask can throw unchecked ConnectException/KafkaException.
                     // Make sure the future is cancelled in that case
@@ -280,20 +279,6 @@ public abstract class AbstractKafkaConnectSource<T> implements Source<T> {
                     log.error("No offsets to commit!");
                     flushFuture.completeExceptionally(new Exception("No Offsets Added Error"));
                     return;
-                }
-
-                // Wait until the offsets are flushed
-                try {
-                    doFlush.get(FLUSH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    log.warn("Flush of {} offsets interrupted, cancelling", this);
-                    offsetWriter.cancelFlush();
-                } catch (ExecutionException e) {
-                    log.error("Flush of {} offsets threw an unexpected exception: ", this, e);
-                    offsetWriter.cancelFlush();
-                } catch (TimeoutException e) {
-                    log.error("Timed out waiting to flush {} offsets to storage", this);
-                    offsetWriter.cancelFlush();
                 }
             }
         }
