@@ -147,6 +147,7 @@ public class SinkConfigUtils {
                     bldr.setCryptoSpec(CryptoUtils.convert(spec.getCryptoConfig()));
                 }
                 bldr.putAllConsumerProperties(spec.getConsumerProperties());
+                bldr.setPoolMessages(spec.isPoolMessages());
                 sourceSpecBuilder.putInputSpecs(topic, bldr.build());
             });
         }
@@ -275,6 +276,7 @@ public class SinkConfigUtils {
             }
             consumerConfig.setRegexPattern(input.getValue().getIsRegexPattern());
             consumerConfig.setConsumerProperties(input.getValue().getConsumerPropertiesMap());
+            consumerConfig.setPoolMessages(input.getValue().getPoolMessages());
             consumerConfigMap.put(input.getKey(), consumerConfig);
         }
         sinkConfig.setInputSpecs(consumerConfigMap);
