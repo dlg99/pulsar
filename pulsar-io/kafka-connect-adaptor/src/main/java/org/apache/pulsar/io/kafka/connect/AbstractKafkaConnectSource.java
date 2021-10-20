@@ -251,14 +251,25 @@ public abstract class AbstractKafkaConnectSource<T> implements Source<T> {
                     doFlush.get(FLUSH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
                     sourceTask.commit();
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                     log.warn("Flush of {} offsets interrupted, cancelling", this);
                     offsetWriter.cancelFlush();
+                    fail();
                 } catch (ExecutionException e) {
                     log.error("Flush of {} offsets threw an unexpected exception: ", this, e);
                     offsetWriter.cancelFlush();
+                    fail();
                 } catch (TimeoutException e) {
                     log.error("Timed out waiting to flush {} offsets to storage", this);
                     offsetWriter.cancelFlush();
+                    fail();
+                } catch (Throwable t) {
+                    // SourceTask can throw unchecked ConnectException/KafkaException.
+                    // Make sure the future is cancelled in that case
+                    log.error("SourceTask's commit failed, failing", this);
+                    offsetWriter.cancelFlush();
+                    fail();
+                    throw t;
                 }
             }
         }
