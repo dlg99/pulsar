@@ -64,6 +64,8 @@ public abstract class AbstractKafkaConnectSource<T> implements Source<T> {
     // number of outstandingRecords that have been polled but not been acked
     private AtomicInteger outstandingRecords = new AtomicInteger(0);
 
+    private volatile Throwable lastException;
+
     @Override
     public void open(Map<String, Object> config, SourceContext sourceContext) throws Exception {
         Map<String, String> stringConfig = new HashMap<>();
@@ -122,12 +124,16 @@ public abstract class AbstractKafkaConnectSource<T> implements Source<T> {
 
         sourceTaskContext = new PulsarIOSourceTaskContext(offsetReader, pulsarKafkaWorkerConfig);
 
+        lastException = null;
         sourceTask.initialize(sourceTaskContext);
         sourceTask.start(stringConfig);
     }
 
     @Override
     public synchronized Record<T> read() throws Exception {
+        if (lastException != null) {
+            throw new Exception("Flush failed", lastException);
+        }
         while (true) {
             if (currentBatch == null) {
                 flushFuture = new CompletableFuture<>();
@@ -162,6 +168,7 @@ public abstract class AbstractKafkaConnectSource<T> implements Source<T> {
         if (sourceTask != null) {
             sourceTask.stop();
         }
+        lastException = null;
     }
 
     public abstract AbstractKafkaSourceRecord<T> processSourceRecord(final SourceRecord srcRecord);
@@ -269,7 +276,7 @@ public abstract class AbstractKafkaConnectSource<T> implements Source<T> {
                     log.error("SourceTask's commit failed, failing", this);
                     offsetWriter.cancelFlush();
                     fail();
-                    throw t;
+                    lastException = t;
                 }
             }
         }
