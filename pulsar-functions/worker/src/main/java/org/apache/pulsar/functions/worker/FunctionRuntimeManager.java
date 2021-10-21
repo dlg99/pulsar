@@ -387,7 +387,7 @@ public class FunctionRuntimeManager implements AutoCloseable{
         }
     }
 
-    public synchronized void restartFunctionInstances(String tenant, String namespace, String functionName)
+    public void restartFunctionInstances(String tenant, String namespace, String functionName)
             throws Exception {
         final String fullFunctionName = String.format("%s/%s/%s", tenant, namespace, functionName);
         Collection<Assignment> assignments = this.findFunctionAssignments(tenant, namespace, functionName);
@@ -403,7 +403,9 @@ public class FunctionRuntimeManager implements AutoCloseable{
             final String workerId = this.workerConfig.getWorkerId();
             String fullyQualifiedInstanceId = FunctionCommon.getFullyQualifiedInstanceId(assignment.getInstance());
             if (assignedWorkerId.equals(workerId)) {
-                stopFunction(fullyQualifiedInstanceId, true);
+                synchronized (this) {
+                    stopFunction(fullyQualifiedInstanceId, true);
+                }
             } else {
                 List<WorkerInfo> workerInfoList = this.membershipManager.getCurrentMembership();
                 WorkerInfo workerInfo = null;
@@ -437,7 +439,9 @@ public class FunctionRuntimeManager implements AutoCloseable{
                 final String workerId = this.workerConfig.getWorkerId();
                 String fullyQualifiedInstanceId = FunctionCommon.getFullyQualifiedInstanceId(assignment.getInstance());
                 if (assignedWorkerId.equals(workerId)) {
-                    stopFunction(fullyQualifiedInstanceId, true);
+                    synchronized (this) {
+                        stopFunction(fullyQualifiedInstanceId, true);
+                    }
                 } else {
                     List<WorkerInfo> workerInfoList = this.membershipManager.getCurrentMembership();
                     WorkerInfo workerInfo = null;
