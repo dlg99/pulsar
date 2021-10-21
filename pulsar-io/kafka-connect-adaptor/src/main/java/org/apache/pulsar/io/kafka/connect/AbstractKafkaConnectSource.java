@@ -167,8 +167,15 @@ public abstract class AbstractKafkaConnectSource<T> implements Source<T> {
     public void close() {
         if (sourceTask != null) {
             sourceTask.stop();
+            sourceTask = null;
         }
+
         lastException = null;
+
+        if (offsetStore != null) {
+            offsetStore.stop();
+            offsetStore = null;
+        }
     }
 
     public abstract AbstractKafkaSourceRecord<T> processSourceRecord(final SourceRecord srcRecord);
