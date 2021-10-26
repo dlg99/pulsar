@@ -492,9 +492,9 @@ The Apache Software License, Version 2.0
     - com.squareup.okhttp3-logging-interceptor-3.14.3.jar
     - com.squareup.okhttp3-okhttp-3.14.3.jar
   * Kubernetes Client
-    - io.kubernetes-client-java-9.0.2.jar
-    - io.kubernetes-client-java-api-9.0.2.jar
-    - io.kubernetes-client-java-proto-9.0.2.jar
+    - io.kubernetes-client-java-12.0.1.jar
+    - io.kubernetes-client-java-api-12.0.1.jar
+    - io.kubernetes-client-java-proto-12.0.1.jar
   * Joda Time
     - joda-time-2.10.1.jar
     - joda-time-joda-time-2.10.1.jar

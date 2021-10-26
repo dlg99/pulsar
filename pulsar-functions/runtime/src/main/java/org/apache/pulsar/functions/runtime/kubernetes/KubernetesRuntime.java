@@ -663,7 +663,7 @@ public class KubernetesRuntime implements Runtime {
                     try {
                         response = coreClient.listNamespacedPod(jobNamespace, null, null,
                                 null, null, labels,
-                                null, null, null, null);
+                                null, null, null, null, null);
                     } catch (ApiException e) {
 
                         String errorMsg = e.getResponseBody() != null ? e.getResponseBody() : e.getMessage();
