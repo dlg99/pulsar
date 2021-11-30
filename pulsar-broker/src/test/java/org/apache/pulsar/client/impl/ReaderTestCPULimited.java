@@ -31,6 +31,8 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.api.SizeUnit;
 import org.apache.pulsar.common.policies.data.ClusterData;
+import org.apache.pulsar.common.policies.data.Policies;
+import org.apache.pulsar.common.policies.data.RetentionPolicies;
 import org.apache.pulsar.common.policies.data.TenantInfoImpl;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -52,17 +54,15 @@ public class ReaderTestCPULimited extends MockedPulsarServiceBaseTest {
     private volatile CompletableFuture<Void> outstandingReadToEnd = null;
     private final AtomicInteger count = new AtomicInteger(0);
     private final String topic = "persistent://my-property/my-ns/my-reader-topic";
-    private final String topic2 = "persistent://my-property/my-ns/my-reader-topic2";
     private final int numKeys = 10000;
 
     Producer<byte[]> producer;
 
-    @Override
-    protected void customizeNewPulsarClientBuilder(ClientBuilder clientBuilder) {
-        clientBuilder.ioThreads(2);
-        clientBuilder.listenerThreads(2);
-        //clientBuilder.memoryLimit(1024, SizeUnit.BYTES);
-    }
+    //@Override
+    //protected void customizeNewPulsarClientBuilder(ClientBuilder clientBuilder) {
+    //    clientBuilder.ioThreads(2);
+    //    clientBuilder.listenerThreads(2);
+    //}
 
     @BeforeMethod
     @Override
@@ -73,6 +73,12 @@ public class ReaderTestCPULimited extends MockedPulsarServiceBaseTest {
                 ClusterData.builder().serviceUrl(pulsar.getWebServiceAddress()).build());
         admin.tenants().createTenant("my-property",
                 new TenantInfoImpl(Sets.newHashSet("appid1", "appid2"), Sets.newHashSet("test")));
+/*
+        Policies policies = new Policies();
+        policies.replication_clusters = Sets.newHashSet("test");
+        policies.retention_policies = new RetentionPolicies(-1, -1);
+        admin.namespaces().createNamespace("my-property/my-ns", policies);
+*/
         admin.namespaces().createNamespace("my-property/my-ns", Sets.newHashSet("test"));
 
         ProducerBuilder<byte[]> builder = pulsarClient.newProducer();
@@ -95,7 +101,7 @@ public class ReaderTestCPULimited extends MockedPulsarServiceBaseTest {
         super.internalCleanup();
     }
 
-    private Set<String> publishMessages(String topic, int count) throws Exception {
+    private Set<String> publishMessages(int count) throws Exception {
         Set<String> keys = new HashSet<>();
         Future<?> lastFuture = null;
         for (int i = 0; i < count; i++) {
@@ -111,22 +117,35 @@ public class ReaderTestCPULimited extends MockedPulsarServiceBaseTest {
 
     @Test
     public void testReadMessage() throws Exception {
-        Set<String> keys = publishMessages(topic, numKeys);
+        Set<String> keys = publishMessages(numKeys);
         log.info("done publishing");
 
         super.restartBroker();
+        pulsarClient.shutdown();
+        pulsarClient = newPulsarClient(lookupUrl.toString(), 0);
 
-        Reader<byte[]> reader = pulsarClient.newReader()
-                .topic(topic)
-                .startMessageId(MessageId.earliest)
-                .readerName(subscription)
-                .create();
+        restart:
+        while (true) {
+            try (Reader<byte[]> reader = pulsarClient.newReader()
+                    .topic(topic)
+                    .startMessageId(MessageId.earliest)
+                    .readerName(subscription)
+                    .create()) {
 
-        while (reader.hasMessageAvailable()) {
-            Message<byte[]> message = reader.readNext();
-            log.info("read message {}", message.getKey());
-            Assert.assertTrue(keys.remove(message.getKey()));
+                while (reader.hasMessageAvailable()) {
+                    Message<byte[]> message = reader.readNext(2, TimeUnit.SECONDS);
+                    if (message == null) {
+                        log.info("read message timed out");
+                        continue restart;
+                    }
+                    log.info("read message {}", message.getKey());
+                    Assert.assertTrue(keys.remove(message.getKey()));
+                    message.release();
+                }
+                break;
+            }
         }
+
         Assert.assertTrue(keys.isEmpty());
 
         Reader<byte[]> readLatest = pulsarClient.newReader().topic(topic).startMessageId(MessageId.latest)
