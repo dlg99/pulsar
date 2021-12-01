@@ -53,7 +53,6 @@ public class PulsarMockBookKeeper extends BookKeeper {
     final ExecutorService executor;
     final ZooKeeper zkc;
 
-    @Override
     public ZooKeeper getZkHandle() {
         return zkc;
     }

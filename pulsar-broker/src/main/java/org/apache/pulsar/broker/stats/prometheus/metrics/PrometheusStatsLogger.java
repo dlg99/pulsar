@@ -24,6 +24,9 @@ import org.apache.bookkeeper.stats.Counter;
 import org.apache.bookkeeper.stats.Gauge;
 import org.apache.bookkeeper.stats.OpStatsLogger;
 import org.apache.bookkeeper.stats.StatsLogger;
+import org.apache.bookkeeper.stats.prometheus.LongAdderCounter;
+
+import java.util.HashMap;
 
 /**
  * A {@code Prometheus} based {@link StatsLogger} implementation.
@@ -45,7 +48,7 @@ public class PrometheusStatsLogger implements StatsLogger {
 
     @Override
     public Counter getCounter(String name) {
-        return provider.counters.computeIfAbsent(completeName(name), x -> new LongAdderCounter());
+        return provider.counters.computeIfAbsent(completeName(name), x -> new LongAdderCounter(new HashMap<>()));
     }
 
     @Override
