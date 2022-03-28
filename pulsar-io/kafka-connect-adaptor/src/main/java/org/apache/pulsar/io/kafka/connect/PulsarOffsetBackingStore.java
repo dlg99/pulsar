@@ -21,6 +21,7 @@ package org.apache.pulsar.io.kafka.connect;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.lang.StringUtils.isBlank;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
@@ -35,8 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.connect.runtime.WorkerConfig;
 import org.apache.kafka.connect.storage.OffsetBackingStore;
 import org.apache.kafka.connect.util.Callback;
-import org.apache.pulsar.client.api.AuthenticationFactory;
-import org.apache.pulsar.client.api.ClientBuilder;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Producer;
@@ -54,7 +53,6 @@ public class PulsarOffsetBackingStore implements OffsetBackingStore {
     private Map<ByteBuffer, ByteBuffer> data;
     private PulsarClient client;
     private String topic;
-    private String token;
     private Producer<byte[]> producer;
     private Reader<byte[]> reader;
     private volatile CompletableFuture<Void> outstandingReadToEnd = null;
@@ -211,8 +209,17 @@ public class PulsarOffsetBackingStore implements OffsetBackingStore {
         values.forEach((key, value) -> {
             ByteBuf bb = Unpooled.wrappedBuffer(key);
             byte[] keyBytes = ByteBufUtil.getBytes(bb);
-            bb = Unpooled.wrappedBuffer(value);
-            byte[] valBytes = ByteBufUtil.getBytes(bb);
+            byte[] valBytes = null;
+            if (value != null) {
+                bb = Unpooled.wrappedBuffer(value);
+                valBytes = ByteBufUtil.getBytes(bb);
+            } else {
+                // It does not actually matter if it is earliest or latest.
+                // The connector that provides null offsets works with the
+                // system that cannot seek to the offset anyway.
+                // Just need to store something to keep the offset store happy.
+                valBytes = MessageId.earliest.toByteArray();
+            }
             producer.newMessage()
                 .key(new String(keyBytes, UTF_8))
                 .value(valBytes)
