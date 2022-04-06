@@ -58,18 +58,6 @@ import org.apache.pulsar.io.core.SinkContext;
 import org.apache.pulsar.io.kafka.connect.schema.KafkaConnectData;
 import org.apache.pulsar.io.kafka.connect.schema.PulsarSchemaToKafkaSchema;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
 import static org.apache.pulsar.io.kafka.connect.PulsarKafkaWorkerConfig.OFFSET_STORAGE_TOPIC_CONFIG;
 
 @Slf4j
@@ -275,12 +263,12 @@ public class KafkaConnectSink implements Sink<GenericObject> {
 
             if (nativeObject instanceof org.apache.pulsar.common.schema.KeyValue) {
                 org.apache.pulsar.common.schema.KeyValue kv = (org.apache.pulsar.common.schema.KeyValue) nativeObject;
-                key = kv.getKey();
-                value = kv.getValue();
+                key = KafkaConnectData.getKafkaConnectData(kv.getKey(), keySchema);
+                value = KafkaConnectData.getKafkaConnectData(kv.getValue(), valueSchema);
             } else if (nativeObject instanceof org.apache.pulsar.io.core.KeyValue) {
                 org.apache.pulsar.io.core.KeyValue kv = (org.apache.pulsar.io.core.KeyValue) nativeObject;
-                key = kv.getKey();
-                value = kv.getValue();
+                key = KafkaConnectData.getKafkaConnectData(kv.getKey(), keySchema);
+                value = KafkaConnectData.getKafkaConnectData(kv.getValue(), valueSchema);
             } else if (nativeObject != null) {
                 throw new IllegalStateException("Cannot extract KeyValue data from " + nativeObject.getClass());
             } else {
