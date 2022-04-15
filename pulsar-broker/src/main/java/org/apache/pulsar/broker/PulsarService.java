@@ -70,6 +70,7 @@ import org.apache.bookkeeper.common.util.OrderedScheduler;
 import org.apache.bookkeeper.conf.ClientConfiguration;
 import org.apache.bookkeeper.mledger.LedgerOffloader;
 import org.apache.bookkeeper.mledger.LedgerOffloaderFactory;
+import org.apache.bookkeeper.mledger.LedgerOffloaderStats;
 import org.apache.bookkeeper.mledger.ManagedLedgerFactory;
 import org.apache.bookkeeper.mledger.impl.NullLedgerOffloader;
 import org.apache.bookkeeper.mledger.offload.Offloaders;
@@ -207,6 +208,7 @@ public class PulsarService implements AutoCloseable {
     private OrderedScheduler offloaderScheduler;
     private OffloadersCache offloadersCache = new OffloadersCache();
     private LedgerOffloader defaultOffloader;
+    private final LedgerOffloaderStats offloaderStats;
     private Map<NamespaceName, LedgerOffloader> ledgerOffloaderMap = new ConcurrentHashMap<>();
     private ScheduledFuture<?> loadReportTask = null;
     private ScheduledFuture<?> loadSheddingTask = null;
@@ -313,6 +315,11 @@ public class PulsarService implements AutoCloseable {
 
         this.ioEventLoopGroup = EventLoopUtil.newEventLoopGroup(config.getNumIOThreads(), config.isEnableBusyWait(),
                 new DefaultThreadFactory("pulsar-io"));
+
+        int interval = config.getManagedLedgerStatsPeriodSeconds();
+        boolean exposeTopicMetrics = config.isExposeTopicLevelMetricsInPrometheus();
+        this.offloaderStats = LedgerOffloaderStats.create(config.isExposeManagedLedgerMetricsInPrometheus(),
+                exposeTopicMetrics, this.getOffloaderScheduler(), interval);
     }
 
     public MetadataStoreExtended createConfigurationMetadataStore() throws MetadataStoreException {
@@ -484,6 +491,9 @@ public class PulsarService implements AutoCloseable {
 
             if (transactionReplayExecutor != null) {
                 transactionReplayExecutor.shutdown();
+            }
+            if (this.offloaderStats != null) {
+                this.offloaderStats.close();
             }
 
             ioEventLoopGroup.shutdownGracefully();
@@ -1196,6 +1206,7 @@ public class PulsarService implements AutoCloseable {
                 checkNotNull(offloadPolicies.getOffloadersDirectory(),
                     "Offloader driver is configured to be '%s' but no offloaders directory is configured.",
                         offloadPolicies.getManagedLedgerOffloadDriver());
+
                 Offloaders offloaders = offloadersCache.getOrLoadOffloaders(
                         offloadPolicies.getOffloadersDirectory(), config.getNarExtractionDirectory());
 
@@ -1209,8 +1220,7 @@ public class PulsarService implements AutoCloseable {
                             LedgerOffloader.METADATA_SOFTWARE_GITSHA_KEY.toLowerCase(), PulsarVersion.getGitSha(),
                             LedgerOffloader.METADATA_PULSAR_CLUSTER_NAME.toLowerCase(), config.getClusterName()
                         ),
-                        schemaStorage,
-                        getOffloaderScheduler(offloadPolicies));
+                        schemaStorage, getOffloaderScheduler(offloadPolicies), this.offloaderStats);
                 } catch (IOException ioe) {
                     throw new PulsarServerException(ioe.getMessage(), ioe.getCause());
                 }
