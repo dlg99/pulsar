@@ -20,6 +20,7 @@ package org.apache.bookkeeper.mledger.offload.filesystem;
 
 import org.apache.bookkeeper.common.util.OrderedScheduler;
 import org.apache.bookkeeper.mledger.LedgerOffloaderFactory;
+import org.apache.bookkeeper.mledger.LedgerOffloaderStats;
 import org.apache.bookkeeper.mledger.offload.filesystem.impl.FileSystemManagedLedgerOffloader;
 import org.apache.pulsar.common.policies.data.OffloadPoliciesImpl;
 
@@ -34,7 +35,9 @@ public class FileSystemLedgerOffloaderFactory implements LedgerOffloaderFactory<
 
     @Override
     public FileSystemManagedLedgerOffloader create(OffloadPoliciesImpl offloadPolicies,
-                                                   Map<String, String> userMetadata, OrderedScheduler scheduler) throws IOException {
-        return FileSystemManagedLedgerOffloader.create(offloadPolicies, scheduler);
+                                                   Map<String, String> userMetadata,
+                                                   OrderedScheduler scheduler,
+                                                   LedgerOffloaderStats offloaderStats) throws IOException {
+        return FileSystemManagedLedgerOffloader.create(offloadPolicies, scheduler, offloaderStats);
     }
 }
