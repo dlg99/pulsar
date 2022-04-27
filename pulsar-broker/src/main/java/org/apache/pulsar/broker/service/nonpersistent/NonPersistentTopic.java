@@ -369,7 +369,7 @@ public class NonPersistentTopic extends AbstractTopic implements Topic, TopicPol
 
     @Override
     public CompletableFuture<Void> delete() {
-        return delete(false, false, false);
+        return delete(false, false);
     }
 
     /**
@@ -379,11 +379,10 @@ public class NonPersistentTopic extends AbstractTopic implements Topic, TopicPol
      */
     @Override
     public CompletableFuture<Void> deleteForcefully() {
-        return delete(false, true, false);
+        return delete(false, true);
     }
 
-    private CompletableFuture<Void> delete(boolean failIfHasSubscriptions, boolean closeIfClientsConnected,
-            boolean deleteSchema) {
+    private CompletableFuture<Void> delete(boolean failIfHasSubscriptions, boolean closeIfClientsConnected) {
         CompletableFuture<Void> deleteFuture = new CompletableFuture<>();
 
         lock.writeLock().lock();
@@ -428,9 +427,8 @@ public class NonPersistentTopic extends AbstractTopic implements Topic, TopicPol
                     } else {
                         subscriptions.forEach((s, sub) -> futures.add(sub.delete()));
                     }
-                    if (deleteSchema) {
-                        futures.add(deleteSchema().thenApply(schemaVersion -> null));
-                    }
+
+                    futures.add(deleteSchema().thenApply(schemaVersion -> null));
                     futures.add(deleteTopicPolicies());
                     FutureUtil.waitForAll(futures).whenComplete((v, ex) -> {
                         if (ex != null) {
@@ -947,7 +945,7 @@ public class NonPersistentTopic extends AbstractTopic implements Topic, TopicPol
                             maxInactiveDurationInSec);
                     }
 
-                    stopReplProducers().thenCompose(v -> delete(true, false, true))
+                    stopReplProducers().thenCompose(v -> delete(true, false))
                             .thenCompose(__ -> tryToDeletePartitionedMetadata())
                             .thenRun(() -> log.info("[{}] Topic deleted successfully due to inactivity", topic))
                             .exceptionally(e -> {

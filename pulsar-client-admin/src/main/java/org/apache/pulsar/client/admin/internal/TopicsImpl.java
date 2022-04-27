@@ -488,7 +488,7 @@ public class TopicsImpl extends BaseResource implements Topics {
 
     @Override
     public void deletePartitionedTopic(String topic, boolean force, boolean deleteSchema) throws PulsarAdminException {
-        sync(() -> deletePartitionedTopicAsync(topic, force, deleteSchema));
+        sync(() -> deletePartitionedTopicAsync(topic, force, true));
     }
 
     @Override
@@ -496,7 +496,7 @@ public class TopicsImpl extends BaseResource implements Topics {
         TopicName tn = validateTopic(topic);
         WebTarget path = topicPath(tn, "partitions") //
                 .queryParam("force", Boolean.toString(force)) //
-                .queryParam("deleteSchema", Boolean.toString(deleteSchema));
+                .queryParam("deleteSchema", "true");
         return asyncDeleteRequest(path);
     }
 
@@ -512,7 +512,7 @@ public class TopicsImpl extends BaseResource implements Topics {
 
     @Override
     public void delete(String topic, boolean force, boolean deleteSchema) throws PulsarAdminException {
-        sync(() -> deleteAsync(topic, force, deleteSchema));
+        sync(() -> deleteAsync(topic, force, true));
     }
 
     @Override
@@ -520,7 +520,7 @@ public class TopicsImpl extends BaseResource implements Topics {
         TopicName tn = validateTopic(topic);
         WebTarget path = topicPath(tn) //
                 .queryParam("force", Boolean.toString(force)) //
-                .queryParam("deleteSchema", Boolean.toString(deleteSchema));
+                .queryParam("deleteSchema", "true");
         return asyncDeleteRequest(path);
     }
 
