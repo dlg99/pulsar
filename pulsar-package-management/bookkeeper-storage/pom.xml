@@ -40,7 +40,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.datastax.oss</groupId>
+            <groupId>org.apache.distributedlog</groupId>
             <artifactId>distributedlog-core</artifactId>
             <exclusions>
                 <exclusion>

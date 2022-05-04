@@ -90,7 +90,7 @@
     </dependency>
 
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.bookkeeper</groupId>
       <artifactId>bookkeeper-common-allocator</artifactId>
       <exclusions>
         <exclusion>
@@ -101,7 +101,7 @@
     </dependency>
 
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.bookkeeper</groupId>
       <artifactId>cpu-affinity</artifactId>
     </dependency>
 
@@ -111,7 +111,7 @@
     </dependency>
 
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.bookkeeper</groupId>
       <artifactId>circe-checksum</artifactId>
       <version>${bookkeeper.version}</version>
       <exclusions>

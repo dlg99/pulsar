@@ -89,7 +89,7 @@
     </dependency>
 
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.bookkeeper</groupId>
       <artifactId>bookkeeper-tools-framework</artifactId>
     </dependency>
 
