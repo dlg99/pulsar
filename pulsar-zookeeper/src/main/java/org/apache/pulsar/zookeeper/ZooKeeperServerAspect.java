@@ -61,12 +61,7 @@ public class ZooKeeperServerAspect {
                 }).register();
 
         Gauge.build().name("zookeeper_server_data_size_bytes").help("Size of all of z-nodes stored (bytes)").create()
-                .setChild(new Gauge.Child() {
-                    @Override
-                    public double get() {
-                        return zkServer.getZKDatabase().getDataTree().approximateDataSize();
-                    }
-                }).register();
+                .setChild(getDataSizeGauge(zkServer)).register();
 
         Gauge.build().name("zookeeper_server_connections").help("Number of currently opened connections").create()
                 .setChild(new Gauge.Child() {
@@ -96,5 +91,28 @@ public class ZooKeeperServerAspect {
                         return zkServer.getZKDatabase().getDataTree().getEphemeralsCount();
                     }
                 }).register();
+    }
+
+    private Gauge.Child getDataSizeGauge(ZooKeeperServer zkServer) {
+        // off by default, for performance reasons
+        // to enable: pass -Dstats_use_actual_size=true to the JVM
+        boolean useActualSize = Boolean.parseBoolean(
+                System.getProperties().getProperty("stats_use_actual_size", "false"));
+
+        if (useActualSize) {
+            return new Gauge.Child() {
+                @Override
+                public double get() {
+                    return zkServer.getZKDatabase().getDataTree().approximateDataSize();
+                }
+            };
+        } else {
+            return new Gauge.Child() {
+                @Override
+                public double get() {
+                    return -1;
+                }
+            };
+        }
     }
 }
