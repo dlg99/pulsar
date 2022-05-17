@@ -96,8 +96,7 @@ public class ZooKeeperServerAspect {
     private Gauge.Child getDataSizeGauge(ZooKeeperServer zkServer) {
         // off by default, for performance reasons
         // to enable: pass -Dstats_use_actual_size=true to the JVM
-        boolean useActualSize = Boolean.parseBoolean(
-                System.getProperties().getProperty("stats_use_actual_size", "false"));
+        boolean useActualSize = Boolean.getBoolean("stats_use_actual_size");
 
         if (useActualSize) {
             return new Gauge.Child() {
