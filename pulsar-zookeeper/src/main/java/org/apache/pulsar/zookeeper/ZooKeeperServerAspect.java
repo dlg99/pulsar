@@ -27,6 +27,8 @@ import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 
+import java.util.function.Supplier;
+
 /**
  * Instruments ZooKeeperServer to enable stats reporting on data set and z-node sizes
  */
@@ -53,58 +55,62 @@ public class ZooKeeperServerAspect {
         }
 
         Gauge.build().name("zookeeper_server_znode_count").help("Number of z-nodes stored").create()
-                .setChild(new Gauge.Child() {
-                    @Override
-                    public double get() {
-                        return zkServer.getZKDatabase().getNodeCount();
-                    }
-                }).register();
+                .setChild(getGaugeIfEnabled("zookeeper_server_znode_count",
+                        () -> new Gauge.Child() {
+                            @Override
+                            public double get() {
+                                return zkServer.getZKDatabase().getNodeCount();
+                            }
+                        })).register();
 
         Gauge.build().name("zookeeper_server_data_size_bytes").help("Size of all of z-nodes stored (bytes)").create()
-                .setChild(getDataSizeGauge(zkServer)).register();
+                .setChild(getGaugeIfEnabled("zookeeper_server_data_size_bytes",
+                        () -> new Gauge.Child() {
+                            @Override
+                            public double get() {
+                                return zkServer.getZKDatabase().getDataTree().approximateDataSize();
+                            }
+                })).register();
 
         Gauge.build().name("zookeeper_server_connections").help("Number of currently opened connections").create()
-                .setChild(new Gauge.Child() {
-                    @Override
-                    public double get() {
-                        ServerCnxnFactory cnxFactory = zkServer.getServerCnxnFactory();
-                        if (cnxFactory != null) {
-                            return cnxFactory.getNumAliveConnections();
-                        } else {
-                            return -1;
-                        }
-                    }
-                }).register();
+                .setChild(getGaugeIfEnabled("zookeeper_server_connections",
+                        () -> new Gauge.Child() {
+                            public double get() {
+                                ServerCnxnFactory cnxFactory = zkServer.getServerCnxnFactory();
+                                if (cnxFactory != null) {
+                                    return cnxFactory.getNumAliveConnections();
+                                } else {
+                                    return -1;
+                                }
+                            }
+                        })).register();
 
         Gauge.build().name("zookeeper_server_watches_count").help("Number of watches").create()
-                .setChild(new Gauge.Child() {
-                    @Override
-                    public double get() {
-                        return zkServer.getZKDatabase().getDataTree().getWatchCount();
-                    }
-                }).register();
+                .setChild(getGaugeIfEnabled("zookeeper_server_watches_count",
+                        () -> new Gauge.Child() {
+                            @Override
+                            public double get() {
+                                return zkServer.getZKDatabase().getDataTree().getWatchCount();
+                            }
+                        })).register();
 
         Gauge.build().name("zookeeper_server_ephemerals_count").help("Number of ephemerals z-nodes").create()
-                .setChild(new Gauge.Child() {
-                    @Override
-                    public double get() {
-                        return zkServer.getZKDatabase().getDataTree().getEphemeralsCount();
-                    }
-                }).register();
+                .setChild(getGaugeIfEnabled("zookeeper_server_ephemerals_count",
+                        () -> new Gauge.Child() {
+                            @Override
+                            public double get() {
+                                return zkServer.getZKDatabase().getDataTree().getEphemeralsCount();
+                            }
+                        })).register();
     }
 
-    private Gauge.Child getDataSizeGauge(ZooKeeperServer zkServer) {
+    private Gauge.Child getGaugeIfEnabled(String envSwitch, Supplier<Gauge.Child> supplier) {
         // off by default, for performance reasons
-        // to enable: pass -Dstats_use_actual_size=true to the JVM
-        boolean useActualSize = Boolean.getBoolean("stats_use_actual_size");
+        // to enable: pass -D<envSwitch value>=true to the JVM
+        boolean useActualValue = Boolean.getBoolean(envSwitch);
 
-        if (useActualSize) {
-            return new Gauge.Child() {
-                @Override
-                public double get() {
-                    return zkServer.getZKDatabase().getDataTree().approximateDataSize();
-                }
-            };
+        if (useActualValue) {
+            return supplier.get();
         } else {
             return new Gauge.Child() {
                 @Override
