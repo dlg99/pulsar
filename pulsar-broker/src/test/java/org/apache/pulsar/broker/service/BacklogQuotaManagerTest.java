@@ -438,6 +438,7 @@ public class BacklogQuotaManagerTest {
                         .retentionPolicy(BacklogQuota.RetentionPolicy.consumer_backlog_eviction)
                         .build(), BacklogQuota.BacklogQuotaType.message_age);
         config.setPreciseTimeBasedBacklogQuotaCheck(true);
+        @Cleanup
         PulsarClient client = PulsarClient.builder().serviceUrl(adminUrl.toString()).statsInterval(0, TimeUnit.SECONDS)
                 .build();
 
@@ -467,7 +468,6 @@ public class BacklogQuotaManagerTest {
         // All messages for both subscription should be cleaned up from backlog by backlog monitor task.
         assertEquals(stats.getSubscriptions().get(subName1).getMsgBacklog(), 0);
         assertEquals(stats.getSubscriptions().get(subName2).getMsgBacklog(), 0);
-        client.close();
     }
 
     @Test
@@ -479,6 +479,7 @@ public class BacklogQuotaManagerTest {
                         .limitTime(TIME_TO_CHECK_BACKLOG_QUOTA)
                         .retentionPolicy(BacklogQuota.RetentionPolicy.consumer_backlog_eviction)
                         .build(), BacklogQuota.BacklogQuotaType.message_age);
+        @Cleanup
         PulsarClient client = PulsarClient.builder().serviceUrl(adminUrl.toString()).statsInterval(0, TimeUnit.SECONDS)
                 .build();
 
@@ -511,7 +512,6 @@ public class BacklogQuotaManagerTest {
         // message in current ledger.
         assertEquals(stats.getSubscriptions().get(subName1).getMsgBacklog(), ml.getCurrentLedgerEntries());
         assertEquals(stats.getSubscriptions().get(subName2).getMsgBacklog(), ml.getCurrentLedgerEntries());
-        client.close();
     }
 
     @Test
@@ -524,6 +524,7 @@ public class BacklogQuotaManagerTest {
                         .retentionPolicy(BacklogQuota.RetentionPolicy.consumer_backlog_eviction)
                         .build(), BacklogQuota.BacklogQuotaType.message_age);
         config.setPreciseTimeBasedBacklogQuotaCheck(true);
+        @Cleanup
         PulsarClient client = PulsarClient.builder().serviceUrl(adminUrl.toString()).statsInterval(0, TimeUnit.SECONDS)
                 .build();
 
@@ -560,8 +561,6 @@ public class BacklogQuotaManagerTest {
                     TopicStats latestStats = getTopicStats(topic);
                     assertEquals(latestStats.getSubscriptions().get(subName).getMsgBacklog(), 0);
                 });
-
-        client.close();
     }
 
     @Test
@@ -574,6 +573,7 @@ public class BacklogQuotaManagerTest {
                         .limitTime(TIME_TO_CHECK_BACKLOG_QUOTA)
                         .retentionPolicy(BacklogQuota.RetentionPolicy.consumer_backlog_eviction)
                         .build());
+        @Cleanup
         PulsarClient client = PulsarClient.builder().serviceUrl(adminUrl.toString()).build();
 
         final String topic1 = "persistent://prop/ns-quota/topic11";
@@ -609,6 +609,7 @@ public class BacklogQuotaManagerTest {
                         .retentionPolicy(BacklogQuota.RetentionPolicy.consumer_backlog_eviction)
                         .build(), BacklogQuota.BacklogQuotaType.message_age);
         config.setPreciseTimeBasedBacklogQuotaCheck(true);
+        @Cleanup
         PulsarClient client = PulsarClient.builder().serviceUrl(adminUrl.toString()).build();
 
         final String topic1 = "persistent://prop/ns-quota/topic12";
@@ -650,7 +651,6 @@ public class BacklogQuotaManagerTest {
         stats = getTopicStats(topic1);
         // sub2 has empty backlog because it's backlog get cleaned up by backlog quota monitor task
         assertEquals(stats.getSubscriptions().get(subName2).getMsgBacklog(), 0);
-        client.close();
     }
 
     private Producer<byte[]> createProducer(PulsarClient client, String topic)
@@ -1179,6 +1179,7 @@ public class BacklogQuotaManagerTest {
                         .retentionPolicy(BacklogQuota.RetentionPolicy.producer_exception)
                         .build(), BacklogQuota.BacklogQuotaType.message_age);
         config.setPreciseTimeBasedBacklogQuotaCheck(true);
+        @Cleanup
         final PulsarClient client = PulsarClient.builder().serviceUrl(adminUrl.toString())
                 .statsInterval(0, TimeUnit.SECONDS).build();
         final String topic1 = "persistent://prop/quotahold/exceptandunblock2";
@@ -1232,7 +1233,6 @@ public class BacklogQuotaManagerTest {
             sendException = e;
         }
         assertFalse(gotException, "unable to publish due to " + sendException);
-        client.close();
     }
 
     @Test
@@ -1244,6 +1244,7 @@ public class BacklogQuotaManagerTest {
                         .limitTime(TIME_TO_CHECK_BACKLOG_QUOTA)
                         .retentionPolicy(BacklogQuota.RetentionPolicy.producer_exception)
                         .build(), BacklogQuota.BacklogQuotaType.message_age);
+        @Cleanup
         final PulsarClient client = PulsarClient.builder().serviceUrl(adminUrl.toString())
                 .statsInterval(0, TimeUnit.SECONDS).build();
         final String topic1 = "persistent://prop/quotahold/exceptandunblock2";
@@ -1297,12 +1298,12 @@ public class BacklogQuotaManagerTest {
             sendException = e;
         }
         assertFalse(gotException, "unable to publish due to " + sendException);
-        client.close();
     }
 
     @Test(dataProvider = "backlogQuotaSizeGB", priority = 1)
     public void testBacklogQuotaInGB(boolean backlogQuotaSizeGB) throws Exception {
 
+        admin.close();
         pulsar.close();
         long backlogQuotaByte = 10 * 1024;
         if (backlogQuotaSizeGB) {
@@ -1313,6 +1314,7 @@ public class BacklogQuotaManagerTest {
         config.setBacklogQuotaDefaultRetentionPolicy(BacklogQuota.RetentionPolicy.consumer_backlog_eviction);
         pulsar = new PulsarService(config);
         pulsar.start();
+        admin = PulsarAdmin.builder().serviceHttpUrl(adminUrl.toString()).build();
 
         @Cleanup
         PulsarClient client = PulsarClient.builder().serviceUrl(pulsar.getBrokerServiceUrl()).statsInterval(0, TimeUnit.SECONDS)
