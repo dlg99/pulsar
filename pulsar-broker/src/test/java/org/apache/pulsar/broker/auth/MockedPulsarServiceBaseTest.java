@@ -34,6 +34,8 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -52,6 +54,7 @@ import org.apache.pulsar.broker.PulsarService;
 import org.apache.pulsar.broker.ServiceConfiguration;
 import org.apache.pulsar.broker.intercept.CounterBrokerInterceptor;
 import org.apache.pulsar.broker.namespace.NamespaceService;
+import org.apache.pulsar.broker.service.BrokerTestBase;
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.admin.PulsarAdminBuilder;
 import org.apache.pulsar.client.admin.PulsarAdminException;
@@ -69,6 +72,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.MockZooKeeper;
 import org.apache.zookeeper.MockZooKeeperSession;
 import org.apache.zookeeper.data.ACL;
+import org.awaitility.Awaitility;
 import org.mockito.Mockito;
 import org.mockito.internal.util.MockUtil;
 import org.slf4j.Logger;
@@ -509,6 +513,47 @@ public abstract class MockedPulsarServiceBaseTest extends TestRetrySupport {
         if (!admin.namespaces().getNamespaces(tenant).contains(namespace)) {
             admin.namespaces().createNamespace(namespace);
         }
+    }
+
+    /**
+     * see {@link BrokerTestBase#deleteNamespaceWithRetry(String, boolean, PulsarAdmin, Collection)}
+     */
+    protected void deleteNamespaceWithRetry(String ns, boolean force)
+            throws Exception {
+        BrokerTestBase.deleteNamespaceWithRetry(ns, force, admin, pulsar);
+    }
+
+    /**
+     * see {@link BrokerTestBase#deleteNamespaceWithRetry(String, boolean, PulsarAdmin, Collection)}
+     */
+    protected void deleteNamespaceWithRetry(String ns, boolean force, PulsarAdmin admin)
+            throws Exception {
+        BrokerTestBase.deleteNamespaceWithRetry(ns, force, admin, pulsar);
+    }
+
+    /**
+     * see {@link MockedPulsarServiceBaseTest#deleteNamespaceWithRetry(String, boolean, PulsarAdmin, Collection)}
+     */
+    public static void deleteNamespaceWithRetry(String ns, boolean force, PulsarAdmin admin, PulsarService...pulsars)
+            throws Exception {
+        deleteNamespaceWithRetry(ns, force, admin, Arrays.asList(pulsars));
+    }
+
+    /**
+     * 1. Pause system "__change_event" topic creates.
+     * 2. Do delete namespace with retry because maybe fail by race-condition with create topics.
+     */
+    public static void deleteNamespaceWithRetry(String ns, boolean force, PulsarAdmin admin,
+                                                Collection<PulsarService> pulsars) throws Exception {
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            try {
+                // Maybe fail by race-condition with create topics, just retry.
+                admin.namespaces().deleteNamespace(ns, force);
+                return true;
+            } catch (Exception ex) {
+                return false;
+            }
+        });
     }
 
     private static final Logger log = LoggerFactory.getLogger(MockedPulsarServiceBaseTest.class);
