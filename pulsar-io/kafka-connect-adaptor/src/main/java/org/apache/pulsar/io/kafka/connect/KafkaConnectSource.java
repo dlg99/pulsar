@@ -26,6 +26,8 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.json.JsonConverterConfig;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.pulsar.client.api.Schema;
@@ -49,6 +51,9 @@ public class KafkaConnectSource extends AbstractKafkaConnectSource<KeyValue<byte
     private boolean jsonWithEnvelope = false;
     private static final String JSON_WITH_ENVELOPE_CONFIG = "json-with-envelope";
 
+    protected boolean useCommitRecord = true;
+    private static final String USE_COMMIT_RECORD = "useCommitRecord";
+
     public void open(Map<String, Object> config, SourceContext sourceContext) throws Exception {
         if (config.get(JSON_WITH_ENVELOPE_CONFIG) != null) {
             jsonWithEnvelope = Boolean.parseBoolean(config.get(JSON_WITH_ENVELOPE_CONFIG).toString());
@@ -57,6 +62,12 @@ public class KafkaConnectSource extends AbstractKafkaConnectSource<KeyValue<byte
             config.put(JsonConverterConfig.SCHEMAS_ENABLE_CONFIG, false);
         }
         log.info("jsonWithEnvelope: {}", jsonWithEnvelope);
+
+        if (config.get(USE_COMMIT_RECORD) != null) {
+            useCommitRecord = Boolean.parseBoolean(config.get(USE_COMMIT_RECORD).toString());
+        }
+        log.info("useCommitRecord: {}", useCommitRecord);
+
         super.open(config, sourceContext);
     }
 
@@ -72,14 +83,23 @@ public class KafkaConnectSource extends AbstractKafkaConnectSource<KeyValue<byte
     private class KafkaSourceRecord extends AbstractKafkaSourceRecord<KeyValue<byte[], byte[]>>
             implements KVRecord<byte[], byte[]> {
 
+        final int keySize;
+        final int valueSize;
+
+        final SourceRecord srcRecord;
+
         KafkaSourceRecord(SourceRecord srcRecord) {
             super(srcRecord);
+            this.srcRecord = srcRecord;
+
             byte[] keyBytes = keyConverter.fromConnectData(
                     srcRecord.topic(), srcRecord.keySchema(), srcRecord.key());
+            keySize = keyBytes != null ? keyBytes.length : 0;
             this.key = keyBytes != null ? Optional.of(Base64.getEncoder().encodeToString(keyBytes)) : Optional.empty();
 
             byte[] valueBytes = valueConverter.fromConnectData(
                     srcRecord.topic(), srcRecord.valueSchema(), srcRecord.value());
+            valueSize = valueBytes != null ? valueBytes.length : 0;
 
             this.value = new KeyValue<>(keyBytes, valueBytes);
 
@@ -142,6 +162,40 @@ public class KafkaConnectSource extends AbstractKafkaConnectSource<KeyValue<byte
                 return KeyValueEncodingType.INLINE;
             } else {
                 return KeyValueEncodingType.SEPARATED;
+            }
+        }
+
+        @Override
+        public void fail() {
+            super.fail();
+            if (useCommitRecord) {
+                try {
+                    // null means failed to commit;
+                    getSourceTask().commitRecord(srcRecord, null);
+                } catch (InterruptedException e) {
+                    log.error("Failed to fail record :/, source task should resend data, will get duplicate", e);
+                }
+            }
+        }
+
+        @Override
+        public void ack() {
+            super.ack();
+            if (useCommitRecord) {
+                try {
+                    getSourceTask().commitRecord(srcRecord,
+                            new RecordMetadata(
+                                    new TopicPartition(srcRecord.topic(), srcRecord.kafkaPartition()),
+                                    -1L, // baseOffset == -1L means no offset
+                                    0, // relativeOffset, doesn't matter if baseOffset == -1L
+                                    srcRecord.timestamp(),
+                                    null, //checksum null - will calculate if needed
+                                    keySize, // serializedKeySize
+                                    valueSize // serializedValueSize
+                            ));
+                } catch (InterruptedException e) {
+                    log.error("Failed to commit record, source task should resend data, will get duplicate", e);
+                }
             }
         }
 
