@@ -657,6 +657,7 @@ public class ConsumerImpl<T> extends ConsumerBase<T> implements ConnectionHandle
                                 dlqProducer.newMessage(Schema.AUTO_PRODUCE_BYTES(retryMessage.getReaderSchema().get()))
                                         .value(retryMessage.getData())
                                         .properties(propertiesMap);
+                        copyMessageKeyIfNeeded(message, typedMessageBuilderNew);
                         typedMessageBuilderNew.sendAsync().thenAccept(msgId -> {
                             doAcknowledge(finalMessageId, ackType, Collections.emptyMap(), null).thenAccept(v -> {
                                 result.complete(null);
@@ -680,9 +681,7 @@ public class ConsumerImpl<T> extends ConsumerBase<T> implements ConnectionHandle
                     if (delayTime > 0) {
                         typedMessageBuilderNew.deliverAfter(delayTime, unit);
                     }
-                    if (message.hasKey()) {
-                        typedMessageBuilderNew.key(message.getKey());
-                    }
+                    copyMessageKeyIfNeeded(message, typedMessageBuilderNew);
                     typedMessageBuilderNew.sendAsync()
                             .thenCompose(__ -> doAcknowledge(finalMessageId, ackType, Collections.emptyMap(), null))
                             .thenAccept(v -> result.complete(null))
@@ -705,6 +704,16 @@ public class ConsumerImpl<T> extends ConsumerBase<T> implements ConnectionHandle
             return null;
         });
         return result;
+    }
+
+    private static void copyMessageKeyIfNeeded(Message<?> message, TypedMessageBuilder<?> typedMessageBuilderNew) {
+        if (message.hasKey()) {
+            if (message.hasBase64EncodedKey()) {
+                typedMessageBuilderNew.keyBytes(message.getKeyBytes());
+            } else {
+                typedMessageBuilderNew.key(message.getKey());
+            }
+        }
     }
 
     private SortedMap<String, String> getPropertiesMap(Message<?> message,
@@ -2033,9 +2042,7 @@ public class ConsumerImpl<T> extends ConsumerBase<T> implements ConnectionHandle
                             producerDLQ.newMessage(Schema.AUTO_PRODUCE_BYTES(message.getReaderSchema().get()))
                             .value(message.getData())
                             .properties(getPropertiesMap(message, originMessageIdStr, originTopicNameStr));
-                    if (message.hasKey()) {
-                        typedMessageBuilderNew.key(message.getKey());
-                    }
+                    copyMessageKeyIfNeeded(message, typedMessageBuilderNew);
                     typedMessageBuilderNew.sendAsync()
                             .thenAccept(messageIdInDLQ -> {
                                 possibleSendToDeadLetterTopicMessages.remove(finalMessageId);
