@@ -35,7 +35,7 @@ import org.testcontainers.utility.DockerImageName;
 public class OpenSearchSinkTester extends ElasticSearchSinkTester {
 
     public static final String OPENSEARCH = Optional.ofNullable(System.getenv("OPENSEARCH_IMAGE"))
-            .orElse("opensearchproject/opensearch:1.2.4");
+            .orElse("opensearchproject/opensearch:2.16.0");
 
     private RestHighLevelClient elasticClient;
 
