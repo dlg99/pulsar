@@ -46,7 +46,7 @@ public abstract class ElasticSearchTestBase {
             .orElse("docker.elastic.co/elasticsearch/elasticsearch:7.17.7");
 
     public static final String OPENSEARCH = Optional.ofNullable(System.getenv("OPENSEARCH_IMAGE"))
-            .orElse("opensearchproject/opensearch:1.2.4");
+            .orElse("opensearchproject/opensearch:2.16.0");
 
     protected final String elasticImageName;
 
