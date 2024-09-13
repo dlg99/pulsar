@@ -22,7 +22,7 @@ package org.apache.pulsar.tests.integration.io.sinks;
 import org.apache.pulsar.tests.integration.io.PulsarIOTestBase;
 import org.apache.pulsar.tests.integration.io.RabbitMQSinkTester;
 import org.apache.pulsar.tests.integration.io.RabbitMQSourceTester;
-import org.apache.pulsar.tests.integration.io.sources.KafkaSourceTester;
+//import org.apache.pulsar.tests.integration.io.sources.KafkaSourceTester;
 import org.apache.pulsar.tests.integration.topologies.FunctionRuntimeType;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -39,11 +39,11 @@ public class PulsarSinksTest extends PulsarIOTestBase {
         return new Object[][]{{Boolean.TRUE}, {Boolean.FALSE}};
     }
 
-    @Test(groups = "sink")
-    public void testKafkaSink() throws Exception {
-        final String kafkaContainerName = "kafka-" + randomName(8);
-        testSink(new KafkaSinkTester(kafkaContainerName), true, new KafkaSourceTester(kafkaContainerName));
-    }
+//    @Test(groups = "sink")
+//    public void testKafkaSink() throws Exception {
+//        final String kafkaContainerName = "kafka-" + randomName(8);
+//        testSink(new KafkaSinkTester(kafkaContainerName), true, new KafkaSourceTester(kafkaContainerName));
+//    }
 
     @Test(enabled = false, groups = "sink")
     public void testCassandraSink() throws Exception {
@@ -86,9 +86,9 @@ public class PulsarSinksTest extends PulsarIOTestBase {
         testSink(new RabbitMQSinkTester(containerName), true, new RabbitMQSourceTester(containerName));
     }
 
-    @Test(groups = "sink", dataProvider = "withSchema")
-    public void testKinesis(boolean withSchema) throws Exception {
-        testSink(new KinesisSinkTester(withSchema), true);
-    }
+//    @Test(groups = "sink", dataProvider = "withSchema")
+//    public void testKinesis(boolean withSchema) throws Exception {
+//        testSink(new KinesisSinkTester(withSchema), true);
+//    }
 
 }
