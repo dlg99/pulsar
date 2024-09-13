@@ -20,9 +20,9 @@ package org.apache.pulsar.tests.integration.io.sinks;
 
 
 import org.apache.pulsar.tests.integration.io.PulsarIOTestBase;
-//import org.apache.pulsar.tests.integration.io.RabbitMQSinkTester;
-//import org.apache.pulsar.tests.integration.io.RabbitMQSourceTester;
-//import org.apache.pulsar.tests.integration.io.sources.KafkaSourceTester;
+import org.apache.pulsar.tests.integration.io.RabbitMQSinkTester;
+import org.apache.pulsar.tests.integration.io.RabbitMQSourceTester;
+import org.apache.pulsar.tests.integration.io.sources.KafkaSourceTester;
 import org.apache.pulsar.tests.integration.topologies.FunctionRuntimeType;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
