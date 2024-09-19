@@ -229,8 +229,6 @@ public class OpenSearchHighLevelRestClient extends RestClient implements BulkPro
         if (!Strings.isNullOrEmpty(documentId)) {
             indexRequest.id(documentId);
         }
-        // no longer needed?
-        //indexRequest.type(config.getTypeName());
         indexRequest.source(documentSource, XContentType.JSON);
 
         IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
@@ -246,8 +244,6 @@ public class OpenSearchHighLevelRestClient extends RestClient implements BulkPro
     public boolean deleteDocument(String index, String documentId) throws IOException {
         DeleteRequest deleteRequest = Requests.deleteRequest(index);
         deleteRequest.id(documentId);
-        // no longer needed?
-        //deleteRequest.type(config.getTypeName());
         DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
         if (log.isDebugEnabled()) {
             log.debug("delete result {}", deleteResponse.getResult());
@@ -303,8 +299,6 @@ public class OpenSearchHighLevelRestClient extends RestClient implements BulkPro
         if (!Strings.isNullOrEmpty(request.getDocumentId())) {
             indexRequest.id(request.getDocumentId());
         }
-        // no longer needed?
-        //indexRequest.type(config.getTypeName());
         indexRequest.source(request.getDocumentSource(), XContentType.JSON);
         if (log.isDebugEnabled()) {
             log.debug("append index request id={}, type={}, source={}", request.getDocumentId(), config.getTypeName(),
@@ -317,8 +311,6 @@ public class OpenSearchHighLevelRestClient extends RestClient implements BulkPro
     public void appendDeleteRequest(BulkProcessor.BulkDeleteRequest request) throws IOException {
         DeleteRequest deleteRequest = new DeleteRequestWithPulsarRecord(request.getIndex(), request.getRecord());
         deleteRequest.id(request.getDocumentId());
-        // no longer needed?
-        //deleteRequest.type(config.getTypeName());
         if (log.isDebugEnabled()) {
             log.debug("append delete request id={}, type={}", request.getDocumentId(), config.getTypeName());
         }
