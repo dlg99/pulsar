@@ -19,7 +19,6 @@
 package org.apache.pulsar.utils.auth.tokens;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -291,12 +290,12 @@ public class TokensCliUtils {
             }
 
             // Validate the token
-            Jwt<?, Claims> jwt = Jwts.parserBuilder()
+            Jwt<?, ?> jwt = Jwts.parser()
                     .setSigningKey(validationKey)
                     .build()
-                    .parseClaimsJws(token);
+                    .parse(token);
 
-            System.out.println(jwt.getBody());
+            System.out.println(jwt.getPayload());
             return 0;
         }
     }

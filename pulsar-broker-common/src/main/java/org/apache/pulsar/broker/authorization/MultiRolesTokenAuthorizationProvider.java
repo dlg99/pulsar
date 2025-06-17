@@ -69,7 +69,7 @@ public class MultiRolesTokenAuthorizationProvider extends PulsarAuthorizationPro
 
     public MultiRolesTokenAuthorizationProvider() {
         this.roleClaim = Claims.SUBJECT;
-        this.parser = Jwts.parserBuilder().build();
+        this.parser = Jwts.parser().build();
     }
 
     @Override

@@ -35,6 +35,7 @@ import java.net.SocketAddress;
 import java.security.Key;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import javax.naming.AuthenticationException;
 import javax.net.ssl.SSLSession;
 import javax.servlet.http.HttpServletRequest;
@@ -137,8 +138,8 @@ public class AuthenticationProviderToken implements AuthenticationProvider {
 
         long allowedSkew = getConfTokenAllowedClockSkewSeconds(config);
 
-        this.parser = Jwts.parserBuilder()
-                .setAllowedClockSkewSeconds(allowedSkew)
+        this.parser = Jwts.parser()
+                .clockSkewSeconds(allowedSkew)
                 .setSigningKey(this.validationKey)
                 .build();
 
@@ -246,6 +247,14 @@ public class AuthenticationProviderToken implements AuthenticationProvider {
                         throw new AuthenticationException("Audiences in token: ["
                                 + String.join(", ", audiences) + "] not contains this broker: " + audience);
                     }
+                } else if (object instanceof Set) {
+                        Set<String> audiences = (Set<String>) object;
+                        // audience not contains this broker, throw exception.
+                        if (!audiences.contains(audience)) {
+                            incrementFailureMetric(ErrorCode.INVALID_AUDIENCES);
+                            throw new AuthenticationException("Audiences in token: ["
+                                    + String.join(", ", audiences) + "] not contains this broker: " + audience);
+                        }
                 } else if (object instanceof String) {
                     if (!object.equals(audience)) {
                         incrementFailureMetric(ErrorCode.INVALID_AUDIENCES);

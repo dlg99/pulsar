@@ -92,14 +92,14 @@ public class AuthenticationProviderTokenTest {
                 .compact();
 
         @SuppressWarnings("unchecked")
-        Jwt<?, Claims> jwt = Jwts.parserBuilder()
+        Jwt<?, ?> jwt = Jwts.parser()
                 .setSigningKey(AuthTokenUtils.decodeSecretKey(secretKey.getEncoded()))
                 .build()
                 .parse(token);
 
         assertNotNull(jwt);
-        assertNotNull(jwt.getBody());
-        assertEquals(jwt.getBody().getSubject(), SUBJECT);
+        assertNotNull(jwt.getPayload());
+        assertEquals(((Claims)jwt.getPayload()).getSubject(), SUBJECT);
     }
 
     @Test
@@ -114,14 +114,14 @@ public class AuthenticationProviderTokenTest {
                 Optional.empty());
 
         @SuppressWarnings("unchecked")
-        Jwt<?, Claims> jwt = Jwts.parserBuilder()
+        Jwt<?, ?> jwt = Jwts.parser()
                 .setSigningKey(AuthTokenUtils.decodePublicKey(Decoders.BASE64.decode(publicKey), SignatureAlgorithm.RS256))
                 .build()
                 .parse(token);
 
         assertNotNull(jwt);
-        assertNotNull(jwt.getBody());
-        assertEquals(jwt.getBody().getSubject(), SUBJECT);
+        assertNotNull(jwt.getPayload());
+        assertEquals(((Claims)jwt.getPayload()).getSubject(), SUBJECT);
     }
 
     @Test
