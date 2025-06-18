@@ -21,7 +21,7 @@ package org.apache.pulsar.client.impl.auth.oauth2.protocol;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.SecureDigestAlgorithm;
+import io.jsonwebtoken.SignatureAlgorithm;
 import java.net.URI;
 import java.security.PrivateKey;
 import java.time.Instant;
@@ -55,12 +55,12 @@ public class JwtBearerExchangeRequest {
         // per https://developer.okta.com/docs/guides/build-self-signed-jwt/java/main/#gather-claims-information
         // issuer and subject must be the same as client_id
         JwtBuilder builder = Jwts.builder()
-                .audience().add(audience).and()
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plus(ttlMillis, ChronoUnit.MILLIS)))
-                .issuer(clientId)
-                .subject(clientId)
-                .signWith(privateKey, (SecureDigestAlgorithm) Jwts.SIG.get().forKey(signatureAlgorithm));
+                .setAudience(audience)
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(now.plus(ttlMillis, ChronoUnit.MILLIS)))
+                .setIssuer(clientId)
+                .setSubject(clientId)
+                .signWith(privateKey, SignatureAlgorithm.forName(signatureAlgorithm));
 
         return builder.compact();
     }

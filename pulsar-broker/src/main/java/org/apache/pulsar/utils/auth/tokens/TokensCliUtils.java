@@ -290,12 +290,12 @@ public class TokensCliUtils {
             }
 
             // Validate the token
-            Jwt<?, ?> jwt = Jwts.parser()
+            Jwt<?, ?> jwt = Jwts.parserBuilder()
                     .setSigningKey(validationKey)
                     .build()
                     .parse(token);
 
-            System.out.println(jwt.getPayload());
+            System.out.println(jwt.getBody());
             return 0;
         }
     }

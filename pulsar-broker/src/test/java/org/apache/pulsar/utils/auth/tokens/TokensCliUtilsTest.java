@@ -77,7 +77,7 @@ public class TokensCliUtilsTest {
             new TokensCliUtils().execute(command);
             String token = baoStream.toString().trim();
 
-            Jwt<?, ?> jwt = Jwts.parser()
+            Jwt<?, ?> jwt = Jwts.parserBuilder()
                     .setSigningKey(Decoders.BASE64.decode(secretKey))
                     .build()
                     .parse(token);
@@ -115,11 +115,11 @@ public class TokensCliUtilsTest {
             Instant stop = (new Date().toInstant().plus(expireAsSec + 5, ChronoUnit.SECONDS));
 
             //Act
-            Claims jwt = (Claims)Jwts.parser()
+            Claims jwt = (Claims)Jwts.parserBuilder()
                     .setSigningKey(Decoders.BASE64.decode("u+FxaxYWpsTfxeEmMh8fQeS3g2jfXw4+sGIv+PTY+BY="))
                     .build()
                     .parse(token)
-                    .getPayload();
+                    .getBody();
 
             //Assert
             //Checks if the token expires within +-5 sec.

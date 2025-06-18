@@ -138,8 +138,8 @@ public class AuthenticationProviderToken implements AuthenticationProvider {
 
         long allowedSkew = getConfTokenAllowedClockSkewSeconds(config);
 
-        this.parser = Jwts.parser()
-                .clockSkewSeconds(allowedSkew)
+        this.parser = Jwts.parserBuilder()
+                .setAllowedClockSkewSeconds(allowedSkew)
                 .setSigningKey(this.validationKey)
                 .build();
 
