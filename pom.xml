@@ -243,7 +243,7 @@ flexible messaging model and an intuitive client API.</description>
     <debezium.mysql.version>8.0.30</debezium.mysql.version>
     <!-- Override version that brings CVE-2022-3143 with debezium -->
     <wildfly-elytron.version>1.15.16.Final</wildfly-elytron.version>
-    <jsonwebtoken.version>0.12.6</jsonwebtoken.version>
+    <jsonwebtoken.version>0.11.5</jsonwebtoken.version>
     <opencensus.version>0.28.0</opencensus.version>
     <hadoop3.version>3.4.0</hadoop3.version>
     <dnsjava3.version>3.6.2</dnsjava3.version>
