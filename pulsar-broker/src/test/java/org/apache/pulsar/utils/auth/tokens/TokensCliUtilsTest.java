@@ -75,7 +75,7 @@ public class TokensCliUtilsTest {
             };
 
             new TokensCliUtils().execute(command);
-            String token = baoStream.toString();
+            String token = baoStream.toString().trim();
 
             Jwt<?, ?> jwt = Jwts.parser()
                     .setSigningKey(Decoders.BASE64.decode(secretKey))
@@ -109,7 +109,7 @@ public class TokensCliUtilsTest {
             };
 
             new TokensCliUtils().execute(command);
-            String token = baoStream.toString();
+            String token = baoStream.toString().trim();
 
             Instant start = (new Date().toInstant().plus(expireAsSec - 5, ChronoUnit.SECONDS));
             Instant stop = (new Date().toInstant().plus(expireAsSec + 5, ChronoUnit.SECONDS));
