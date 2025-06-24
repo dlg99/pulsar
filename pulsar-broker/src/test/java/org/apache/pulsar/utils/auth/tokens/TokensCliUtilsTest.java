@@ -115,10 +115,10 @@ public class TokensCliUtilsTest {
             Instant stop = (new Date().toInstant().plus(expireAsSec + 5, ChronoUnit.SECONDS));
 
             //Act
-            Claims jwt = (Claims)Jwts.parserBuilder()
+            Claims jwt = Jwts.parserBuilder()
                     .setSigningKey(Decoders.BASE64.decode("u+FxaxYWpsTfxeEmMh8fQeS3g2jfXw4+sGIv+PTY+BY="))
                     .build()
-                    .parse(token)
+                    .parseClaimsJws(token)
                     .getBody();
 
             //Assert
