@@ -235,7 +235,8 @@ public class BlobStoreManagedLedgerOffloader implements LedgerOffloader {
                 DataBlockUtils.addVersionInfo(blobBuilder, objectMetadata);
                 Blob blob = blobBuilder.build();
                 log.info("initiateMultipartUpload bucket {}, metadata {} ", config.getBucket(), blob.getMetadata());
-                mpu = writeBlobStore.initiateMultipartUpload(config.getBucket(), blob.getMetadata(), new PutOptions());
+                mpu = writeBlobStore.initiateMultipartUpload(config.getBucket(), blob.getMetadata(),
+                        new PutOptions().multipart(config.getUseMultipartUpload()));
             } catch (Throwable t) {
                 promise.completeExceptionally(t);
                 return;

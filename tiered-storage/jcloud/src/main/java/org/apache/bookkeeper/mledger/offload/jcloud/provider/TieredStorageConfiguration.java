@@ -70,6 +70,7 @@ public class TieredStorageConfiguration {
     public static final long DEFAULT_MAX_SEGMENT_TIME_IN_SECOND = 600;
     public static final long DEFAULT_MIN_SEGMENT_TIME_IN_SECOND = 0;
     public static final String MAX_OFFLOAD_SEGMENT_SIZE_IN_BYTES = "maxOffloadSegmentSizeInBytes";
+    public static final String USE_MULTIPART_UPLOAD = "useMultipartUpload";
     public static final long DEFAULT_MAX_SEGMENT_SIZE_IN_BYTES = 1024 * 1024 * 1024;
 
     protected static final int MB = 1024 * 1024;
@@ -208,6 +209,14 @@ public class TieredStorageConfiguration {
             return Long.parseLong(configProperties.get(MAX_OFFLOAD_SEGMENT_SIZE_IN_BYTES));
         } else {
             return DEFAULT_MAX_SEGMENT_SIZE_IN_BYTES;
+        }
+    }
+
+    public boolean getUseMultipartUpload() {
+        if (configProperties.containsKey(USE_MULTIPART_UPLOAD)) {
+            return Boolean.parseBoolean(configProperties.get(USE_MULTIPART_UPLOAD));
+        } else {
+            return false;
         }
     }
 
